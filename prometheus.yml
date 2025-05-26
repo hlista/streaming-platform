@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'mediamtx'
+    static_configs:
+      - targets: ['mediamtx:9998']
+  
+  - job_name: 'webhook-handler'
+    static_configs:
+      - targets: ['webhook-handler:8080']

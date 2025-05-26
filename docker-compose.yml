@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    ports:
+      - "1935:1935"   # RTMP
+      - "8888:8888"   # HLS
+      - "8889:8889"   # WebRTC
+      - "8890:8890"   # SRT
+      - "9997:9997"   # API
+      - "9998:9998"   # Metrics
+    volumes:
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml
+      - recordings:/recordings
+      - hls_data:/hls
+    environment:
+      - MTX_CONFPATH=/mediamtx.yml
+    depends_on:
+      - webhook-handler
+
+  webhook-handler:
+    build: ./services/webhook-handler
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+volumes:
+  redis_data:
+  recordings:
+  hls_data:
+  prometheus_data:
+  grafana_data:

@@ -1,0 +1,96 @@
+###############################################
+# General Parameters
+
+# Log level
+logLevel: info
+
+# Log destinations (stdout, file)
+logDestinations: [stdout]
+externalAuthenticationURL: http://webhook-handler:8080/auth/publish
+# HTTP API
+api: yes
+apiAddress: :9997
+
+# Prometheus metrics
+metrics: yes
+metricsAddress: :9998
+
+# RTMP server
+rtmp: yes
+rtmpAddress: :1935
+rtmpEncryption: "no"
+
+# HLS server
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: '*'
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+
+# WebRTC server
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: '*'
+webrtcICEServers2:
+  # URL can point to a STUN, TURN or TURNS server.
+  # STUN servers are used to obtain the public IP of server and clients. They are
+  # needed when server and clients are on different LANs.
+  # TURN/TURNS servers are needed when a direct connection between server and
+  # clients is not possible. All traffic is routed through them.
+- url: stun:stun.l.google.com:19302
+  # if user is "AUTH_SECRET", then authentication is secret based.
+  # the secret must be inserted into the password field.
+  username: ''
+  password: ''
+
+# SRT server
+srt: yes
+srtAddress: :8890
+
+###############################################
+# Path Configuration
+
+paths:
+  # Stream paths - format: /stream/{username}
+  ~^stream/([a-zA-Z0-9_]+)$:
+    # Source settings
+    source: publisher
+    sourceOnDemand: no
+    
+    # Authentication
+    publishUser: any
+    publishPass: any
+    
+    # Webhooks for stream lifecycle
+    runOnReady: /transcode.sh $1 $MTX_PATH
+    runOnReadyRestart: yes
+    
+    runOnNotReady: |
+      curl -X POST http://webhook-handler:8080/webhooks/stream/stop \
+        -H "Content-Type: application/json" \
+        -d '{"stream_key":"$1","path":"$MTX_PATH"}'
+    
+    runOnRead: |
+      curl -X POST http://webhook-handler:8080/webhooks/viewer/join \
+        -H "Content-Type: application/json" \
+        -d '{"stream_key":"$1","path":"$MTX_PATH","query":"$MTX_QUERY","ip":"$MTX_CONN_IP"}'
+    
+    runOnUnread: |
+      curl -X POST http://webhook-handler:8080/webhooks/viewer/leave \
+        -H "Content-Type: application/json" \
+        -d '{"stream_key":"$1","path":"$MTX_PATH","ip":"$MTX_CONN_IP"}'
+    
+    # Recording settings
+    record: no
+    recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+    recordFormat: fmp4
+    recordPartDuration: 1h
+    recordSegmentDuration: 15m
+    recordDeleteAfter: 24h
+    
+    # Read settings
+    readUser: any
+    readPass: any
+    readIPs: []
