@@ -19,11 +19,6 @@ type StreamEvent struct {
 	IP        string `json:"ip"`
 }
 
-type StreamStartEvent struct {
-	StreamKey string `json:"stream_key"`
-	Path      string `json:"path"`
-}
-
 type StreamState struct {
 	StreamKey   string    `json:"stream_key"`
 	StartTime   time.Time `json:"start_time"`
@@ -35,7 +30,7 @@ func streamStartHandler(c *gin.Context) {
 	timer := prometheus.NewTimer(webhookDuration.WithLabelValues("stream_start"))
 	defer timer.ObserveDuration()
 
-	var event StreamStartEvent
+	var event StreamEvent
 	if err := c.ShouldBindJSON(&event); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
