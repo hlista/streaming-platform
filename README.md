@@ -1,0 +1,1 @@
+Attempt to vibecode a streaming service in go
