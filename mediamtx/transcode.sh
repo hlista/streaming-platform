@@ -3,7 +3,7 @@ STREAM_KEY=$1
 MTX_PATH=$2
 
 # Send webhook notification in background
-curl -X POST http://webhook-handler:8080/webhooks/stream/start \
+curl -X POST http://webhook-handler-1:8080/webhooks/stream/start \
   -H "Content-Type: application/json" \
   -d "{\"stream_key\":\"${STREAM_KEY}\",\"path\":\"${MTX_PATH}\"}" &
 

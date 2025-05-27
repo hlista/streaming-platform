@@ -10,7 +10,7 @@ services:
     command: redis-server --appendonly yes
 
   mediamtx:
-    image: bluenviron/mediamtx:latest
+    build: ./mediamtx
     ports:
       - "1935:1935"   # RTMP
       - "8888:8888"   # HLS
@@ -26,6 +26,14 @@ services:
       - MTX_CONFPATH=/mediamtx.yml
     depends_on:
       - webhook-handler
+
+  # mediamtx-monitor:
+  #   build: ./services/mediamtx-monitor
+  #   environment:
+  #     - REDIS_ADDR=redis:6379
+  #   depends_on:
+  #     - redis
+  #     - mediamtx
 
   webhook-handler:
     build: ./services/webhook-handler

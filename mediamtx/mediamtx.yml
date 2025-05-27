@@ -6,7 +6,29 @@ logLevel: info
 
 # Log destinations (stdout, file)
 logDestinations: [stdout]
-externalAuthenticationURL: http://webhook-handler:8080/auth/publish
+#externalAuthenticationURL: http://webhook-handler:8080/auth/publish
+authInternalUsers:
+  # Default unprivileged user.
+  # Username. 'any' means any user, including anonymous ones.
+- user: any
+  # Password. Not used in case of 'any' user.
+  pass:
+  # IPs or networks allowed to use this user. An empty list means any IP.
+  ips: []
+  # List of permissions.
+  permissions:
+    # Available actions are: publish, read, playback, api, metrics, pprof.
+  - action: publish
+    # Paths can be set to further restrict access to a specific path.
+    # An empty path means any path.
+    # Regular expressions can be used by using a tilde as prefix.
+    path:
+  - action: read
+    path:
+  - action: playback
+    path:
+  - action: api
+    path:
 # HTTP API
 api: yes
 apiAddress: :9997
@@ -59,12 +81,10 @@ paths:
     source: publisher
     sourceOnDemand: no
     
-    # Authentication
-    publishUser: any
-    publishPass: any
-    
-    # Webhooks for stream lifecycle
-    runOnReady: /transcode.sh $1 $MTX_PATH
+    runOnReady: |
+      curl -X POST http://webhook-handler:8080/webhooks/stream/start \
+        -H "Content-Type: application/json" \
+        -d "{\"stream_key\":\"${STREAM_KEY}\",\"path\":\"${MTX_PATH}\"}" &
     runOnReadyRestart: yes
     
     runOnNotReady: |
@@ -89,8 +109,3 @@ paths:
     recordPartDuration: 1h
     recordSegmentDuration: 15m
     recordDeleteAfter: 24h
-    
-    # Read settings
-    readUser: any
-    readPass: any
-    readIPs: []
